@@ -1,5 +1,5 @@
 //declarações originais de sensores e muito mais, basta adicionar
-#include "esp_sleep.h"
+#include "esp_sleep.h" //muy necesaria
 RTC_DATA_ATTR int bootCount = 0;
 //declarações originais de sensores e muito mais, basta adicionar
 
