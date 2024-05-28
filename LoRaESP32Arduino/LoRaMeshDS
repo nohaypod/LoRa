@@ -1,0 +1,15 @@
+//declarações originais de sensores e muito mais, basta adicionar
+#include "esp_sleep.h"
+//declarações originais de sensores e muito mais, basta adicionar
+
+void setup() {
+  //declarações originais de sensores e muito mais, basta adicionar
+  esp_sleep_enable_timer_wakeup(120 * 1000000);
+  //declarações originais de sensores e muito mais, basta adicionar  
+}
+void loop() {
+  ///declarações originais de sensores e muito mais, basta adicionar
+  Serial.println("o dispositivo entrará no modo de suspensão profunda");
+  // Entrar en modo de sueño profundo
+  esp_deep_sleep_start();
+}
