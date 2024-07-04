@@ -179,5 +179,8 @@ void setup() {
 void loop() {
   obtenerBMEleituras();
   exibirleituras();
+  //escuchar nodo vecino
+  //forrawr reeenviar mensjae de vencino
+  //sleep
   LoRaNow.loop();// 
 }
