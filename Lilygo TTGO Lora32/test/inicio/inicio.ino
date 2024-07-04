@@ -1,9 +1,8 @@
-//TTGO Lora32-OLED V4 node tx/rx 
+//LoRa Lilygo TTGO Lora32 OLED 0.0.0 
 //protocolos de comunicação
 #include <SPI.h>//SPI para a comunicação entre dispositivos
-//#include <LoRa.h>//LoRa Long 
 #include <Wire.h>// biblioteca Wire,usada para a comunicação I2C
-#include<LoRaNow.h> //Mesh
+#include<LoRaNow.h> //biblioteca baseada em lora.h com melhorias
 
 //OLED 
 #include <Adafruit_SSD1306.h>//biblioteca para controlar displays OLED
@@ -16,7 +15,10 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);// inicializaç
 #include <Adafruit_BME680.h>
 #include <bme68x.h>
 #include <bme68x_defs.h>
-Adafruit_BME680 bme; // I2C
+Adafruit_BME680 bme; // instância do sensor BME
+float BME680temperatura,BME680pressao,BME680umidade;//declaração das variáveis que serão usadas para armazenar os dados dos sensores
+
+
 //Configuração dos pinos para comunicação LoRa
 #define SCK 5
 #define MISO 19
@@ -29,16 +31,15 @@ Adafruit_BME680 bme; // I2C
 //433E6 for Asia
 //866E6 for Europe
 //915E6 for North America
-//declaração das variáveis que serão usadas para armazenar os dados dos sensores
-float BME680temperatura,BME680pressao,BME680umidade;
+
+
 
 //initilize packet counter
 RTC_DATA_ATTR int bootCount = 0;//registro RTC 
 int readingID = 0;
 String LoRaMessage = "";
-int idnode=1; //id para cada nodo
+//int idnode=1; //id para cada nodo
 unsigned long id;
-
 
 void onMessage(uint8_t *buffer, size_t size)
 {
@@ -80,15 +81,15 @@ void inits(){
   display.setTextColor(WHITE);
   display.setTextSize(1);
   display.setCursor(0, 0);
-  display.print("Node ID:");
+  display.print("ID:");
   
   
   if (!LoRaNow.begin()) {
     Serial.println("LoRa init failed. Check your connections.");
     while (true);
   }
-
-  display.setCursor(50, 0);
+  Serial.println("o sistema lora deveria ter iniciado com sucesso");
+  display.setCursor(30, 0);
   id = LoRaNow.id();
   display.print(id,HEX);
 
