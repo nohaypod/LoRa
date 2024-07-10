@@ -1,10 +1,9 @@
-//LoRa Lilygo TTGO Lora32 OLED 0.0.0 
 //protocolos de comunicação
 #include <SPI.h>//SPI para a comunicação entre dispositivos
+#include <LoRa.h>//LoRa
 #include <Wire.h>// biblioteca Wire,usada para a comunicação I2C
-#include<LoRaNow.h> //biblioteca baseada em lora.h com melhorias
 
-//OLED 
+//OLED library, variable e instancia 
 #include <Adafruit_SSD1306.h>//biblioteca para controlar displays OLED
 #define SCREEN_HEIGHT 64//indica a altura do display em pixels
 #define SCREEN_WIDTH 128//indica o tamanho da largura do display em pixels
@@ -18,68 +17,28 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);// inicializaç
 Adafruit_BME680 bme; // instância do sensor BME
 float BME680temperatura,BME680pressao,BME680umidade;//declaração das variáveis que serão usadas para armazenar os dados dos sensores
 
-
-//Configuração dos pinos para comunicação LoRa
+//Configuração dos pinos para  comunicação LoRa
 #define SCK 5
 #define MISO 19
 #define MOSI 27
 #define SS 18
 #define RST 14
 #define DIO0 26
-#define BAND 915E6
-//define a banda de frequência do módulo LoRa
-//433E6 for Asia
-//866E6 for Europe
-//915E6 for North America
-
-
+#define BAND 866E6 //define a banda de frequência do módulo LoRa //433E6 for Asia //866E6 for Europe //915E6 for North America
 
 //initilize packet counter
 RTC_DATA_ATTR int bootCount = 0;//registro RTC 
 int readingID = 0;
 String LoRaMessage = "";
-//int idnode=1; //id para cada nodo
-unsigned long id;
+unsigned long id =1;
 
-void onMessage(uint8_t *buffer, size_t size)
-{
-  display.setCursor(0, 10);
-  display.print("Hola que hace?");
-  Serial.print("Receive Message: ");
-  Serial.write(buffer, size);
-  Serial.println();
-  
-  display.setCursor(70, 50);
-  display.print(LoRaMessage);
-  display.display();
-  
-  display.print("Valores en Hex: ");
-  for (int i = 0; i < sizeof(buffer); i++) {
-    display.print("0x");
-    if (buffer[i] < 0x10) {
-      display.print("0");
-    }
-    display.print(buffer[i], HEX);
-    display.print(" ");
-  }
-  display.display();
- 
-}
 
-void onSleep()
-{
-  Serial.println("Sleep");
-  delay(5000); // "kind of a sleep"
-  Serial.println("Send Message");
-  LoRaNow.print("Pacote: ");
-  LoRaMessage = String(readingID)+" " + String(BME680temperatura)+"°C "+String(BME680umidade)+"% "+String(BME680pressao)+"hPA ";
 
-  LoRaNow.print(LoRaMessage);
-  LoRaNow.send();
-}
+void setup() {
+  //inicializa a comunicação serial a uma taxa de transmissão de 115200 baud
+  Serial.begin(115200);
 
-void inits(){
-    //inicializar o display OLED
+  //inicializar o display OLED
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     while (true);
   }
@@ -88,20 +47,20 @@ void inits(){
   display.setTextSize(1);
   display.setCursor(0, 0);
   display.print("ID:");
+  display.setCursor(15, 0);
   
-  
-  if (!LoRaNow.begin()) {
+  //configuração dos pinos que serão usados para a comunicação com o módulo LoRa
+  LoRa.setPins(SS, RST, DIO0);
+  // inicia o módulo LoRa com a banda de frequência "BAND"
+  if (!LoRa.begin(BAND)) {
     Serial.println("LoRa init failed. Check your connections.");
-    while (true);
+    while (1);
   }
   Serial.println("o sistema lora deveria ter iniciado com sucesso");
+  
   display.setCursor(30, 0);
-  id = LoRaNow.id();
   display.print(id,HEX);
-
-  //LoRaNow.onMessage(onMessage);
-  LoRaNow.onSleep(onSleep);
-  LoRaNow.showStatus(Serial);
+  display.display();
 
   if (!bme.begin()) {
     Serial.println("Could not find a valid BME680 sensor, check wiring!");
@@ -110,17 +69,22 @@ void inits(){
     display.display();
     //while (1);
   }
-  
-  display.setCursor(0, 10);
+  display.setCursor(30, 0);
   display.print("OLED LoRa BME680 ok!");
   display.display();
-
+  delay(1000);
 }
 
 void obtenerBMEleituras(){
   BME680temperatura=bme.readTemperature();
   BME680pressao=bme.readPressure()/100.0F;
   BME680umidade=bme.readHumidity();
+}
+
+void loop() {
+  obtenerBMEleituras();
+  exibirleituras();
+  
 }
 
 void exibirleituras(){
@@ -181,19 +145,3 @@ void exibirleituras(){
   readingID++;
 }
 
-
-void setup() {
-  Serial.begin(115200);
-  inits();// put your setup code here, to run once:
-  
-}
-
-void loop() {
-  obtenerBMEleituras();
-  exibirleituras();
-  LoRaNow.onMessage(onMessage);//escuchar nodo vecino
-  //LoRaNow.gateway(); // Configurar el dispositivo como gateway
-  //forrawr reeenviar mensjae de vencino
-  //sleep
-  LoRaNow.loop();// 
-}
