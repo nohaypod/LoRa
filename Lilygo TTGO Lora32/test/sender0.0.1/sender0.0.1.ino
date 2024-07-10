@@ -18,9 +18,9 @@ Adafruit_BME680 bme; // instância do sensor BME
 float BME680temperatura,BME680pressao,BME680umidade;//declaração das variáveis que serão usadas para armazenar os dados dos sensores
 
 //Configuração dos pinos para  comunicação LoRa
-#define SCK 5
-#define MISO 19
-#define MOSI 27
+//#define SCK 5
+//#define MISO 19
+//#define MOSI 27
 #define SS 18
 #define RST 14
 #define DIO0 26
@@ -30,9 +30,10 @@ float BME680temperatura,BME680pressao,BME680umidade;//declaração das variávei
 RTC_DATA_ATTR int bootCount = 0;//registro RTC 
 int readingID = 0;
 String LoRaMessage = "";
-const String nodeID = "Nodetwo";  // Identificación
-unsigned long id =1;
-
+const String nodeID = "Nodo2";  // Identificación
+byte localAddress = 0x02;     // address of this device
+byte destination = 0xFF;      // destination to send to
+String incoming = "";
 
 
 void setup() {
@@ -55,7 +56,7 @@ void setup() {
     Serial.println("LoRa init failed. Check your connections.");
     while (1);
   }
-  Serial.println("o sistema lora deveria ter iniciado com sucesso"); 
+  Serial.println("o sistema LoRa deveria ter iniciado com sucesso"); 
   display.setCursor(20, 0);
   display.print(nodeID);
   display.display();
@@ -67,7 +68,7 @@ void setup() {
     display.display();
     //while (1);
   }
-  display.setCursor(30, 0);
+  display.setCursor(0, 40);
   display.print("OLED LoRa BME680 ok!");
   display.display();
   delay(3000);
@@ -121,10 +122,7 @@ void exibirleituras(){
   //espaciopara agregar mostrar variable sensor deluz
   display.setCursor(0,50);  
   display.print("mensagem:");
-  //display.setCursor(50,50);
-  //display.print(readingID);
-  //display.setCursor(70, 50);
-  //display.print(LoRaMessage);
+  
   display.display();
 
   Serial.print("Temperatura:");
@@ -136,59 +134,77 @@ void exibirleituras(){
   Serial.print(" hPa\t Luz: ");
   Serial.print("\tPacote: ");
   Serial.println(readingID);
-  
   readingID++;
-  delay(2000);
+  //delay(2000);
 }
 
-void sendMessage(String outgoing) {
+void onReceive(int packetSize) {
+  if (packetSize == 0) {
+
+    return;          // if there's no packet, return
+  }
+  // read packet header bytes:
+  int recipient = LoRa.read();          // recipient address
+  byte sender = LoRa.read();            // sender address
+  byte incomingMsgId = LoRa.read();     // incoming msg ID
+  byte incomingLength = LoRa.read();    // incoming msg length
+  while (LoRa.available()) {
+    incoming += (char)LoRa.read();
+  }
+
+  //if (incomingLength != incoming.length()) {   // check length for error
+  //  Serial.println("error: message length does not match length");
+  //  return;                             // skip rest of function
+  //}
+
+  // if the recipient isn't this device or broadcast,
+  //if (recipient != localAddress && recipient != 0xFF) {
+  //  Serial.println("This message is not for me.");
+  //  return;                             // skip rest of function
+  //}
+
+  // if message is for this device, or broadcast, print details:
+  Serial.print("Received from: " + String(sender));
+  Serial.print(" ");
+  Serial.print("Sent to: " + String(recipient));
+  Serial.print(" ");
+  Serial.print("Message ID: " + String(incomingMsgId));
+  Serial.print(" ");
+  Serial.print("length: " + String(incomingLength));
+  Serial.print(" ");
+  Serial.print("Message: " + incoming);
+  Serial.print(" ");
+  Serial.print("RSSI: " + String(LoRa.packetRssi()));
+  Serial.print(" ");
+  Serial.println("Snr: " + String(LoRa.packetSnr()));
+  //display.clearDisplay();
+  display.setCursor(60,50);  
+  //display.print(incoming);
+  //display.setCursor(60,60);
   LoRa.beginPacket();
-  LoRa.print(outgoing);
-  //LoRa.write(outgoing.c_str(), outgoing.length());
+  LoRa.print(incoming);
   LoRa.endPacket();
-  Serial.print("Enviando: ");
-  Serial.println(outgoing);
+
+  display.print("RSSI: " + String(LoRa.packetRssi()));
+  display.setCursor(60,60);
+  display.print("Snr: " + String(LoRa.packetSnr()));
+  display.display();
 }
+
 
 void loop() {
+
+  // parse for a packet, and call onReceive with the result:
+  onReceive(LoRa.parsePacket());
+
   obtenerBMEleituras();
   exibirleituras();
-  LoRaMessage = String(nodeID)+":"+String(readingID)+" " + String(BME680temperatura)+"°C "+String(BME680umidade)+"% "+String(BME680pressao)+"hPA ";
-  display.setCursor(60, 0);
-  sendMessage(LoRaMessage);
+  LoRaMessage = String(nodeID)+":"+String(readingID)+":" + String(BME680temperatura)+"°C "+String(BME680umidade)+"% "+String(BME680pressao)+"hPA ";
+  LoRa.beginPacket();
+  LoRa.print(LoRaMessage);
+  LoRa.endPacket();
 
-  // Escuchar mensajes entrantes
-  int packetSize = LoRa.parsePacket();
-  if (packetSize=0) {
-    // Leer el mensaje entrante
-    String incoming = "";
-    String LoRaData = "";
-    LoRaData = LoRa.readString();
-
-    while (LoRa.available()) {
-      incoming += (char)LoRa.read();
-    }
-    Serial.print("Received: ");
-    Serial.println(incoming);
-
-    // Mostrar el mensaje en la pantalla OLED
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.print(LoRaData);
-    display.println(incoming);
-    display.display();
-
-    // Reenviar el mensaje
-    sendMessage(incoming);
-  }
-  else{
-    //display.clearDisplay();
-    display.setCursor(70,50);
-    display.print("no nay ningun paquete recibido que mostar");
-    display.display();
-  }
-
-  //delay(2000);
+  
 }
 
 
