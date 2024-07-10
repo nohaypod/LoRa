@@ -81,10 +81,12 @@ void obtenerBMEleituras(){
   BME680umidade=bme.readHumidity();
 }
 
-void loop() {
-  obtenerBMEleituras();
-  exibirleituras();
-  
+void sendMessage(String outgoing) {
+  LoRa.beginPacket();
+  LoRa.print(outgoing);
+  LoRa.endPacket();
+  Serial.print("Sent: ");
+  Serial.println(outgoing);
 }
 
 void exibirleituras(){
@@ -144,4 +146,37 @@ void exibirleituras(){
   
   readingID++;
 }
+
+void loop() {
+  obtenerBMEleituras();
+  exibirleituras();
+  LoRaMessage = String(readingID)+" " + String(BME680temperatura)+"°C "+String(BME680umidade)+"% "+String(BME680pressao)+"hPA ";
+  sendMessage(LoRaMessage);
+
+  // Escuchar mensajes entrantes
+  int packetSize = LoRa.parsePacket();
+  if (packetSize) {
+    // Leer el mensaje entrante
+    String incoming = "";
+    while (LoRa.available()) {
+      incoming += (char)LoRa.read();
+    }
+    Serial.print("Received: ");
+    Serial.println(incoming);
+
+    // Mostrar el mensaje en la pantalla OLED
+    //display.clearDisplay();
+    display.setCursor(60, 0);
+    display.print("Received: ");
+    display.println(incoming);
+    display.display();
+
+    // Reenviar el mensaje
+    sendMessage(incoming);
+  }
+  
+}
+
+
+
 
