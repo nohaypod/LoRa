@@ -50,8 +50,7 @@ void onMessage(uint8_t *buffer, size_t size)
   Serial.println();
   
   display.setCursor(70, 50);
-  display.print(LoRaMessage);
-  display.display();
+  display.print("llegó un mensaje revisar");
   
   display.print("Valores en Hex: ");
   for (int i = 0; i < sizeof(buffer); i++) {
@@ -63,6 +62,7 @@ void onMessage(uint8_t *buffer, size_t size)
     display.print(" ");
   }
   display.display();
+  LoRaNow.clear();
  
 }
 
@@ -73,7 +73,6 @@ void onSleep()
   Serial.println("Send Message");
   LoRaNow.print("Pacote: ");
   LoRaMessage = String(readingID)+" " + String(BME680temperatura)+"°C "+String(BME680umidade)+"% "+String(BME680pressao)+"hPA ";
-
   LoRaNow.print(LoRaMessage);
   LoRaNow.send();
 }
@@ -99,14 +98,10 @@ void inits(){
   id = LoRaNow.id();
   display.print(id,HEX);
 
-  //LoRaNow.onMessage(onMessage);
-  LoRaNow.onSleep(onSleep);
-  LoRaNow.showStatus(Serial);
-
   if (!bme.begin()) {
     Serial.println("Could not find a valid BME680 sensor, check wiring!");
     display.setCursor(0, 40);
-    display.print("conectar bien sensorBME680!");
+    display.print("Conectar bien sensorBME680!");
     display.display();
     //while (1);
   }
@@ -185,15 +180,20 @@ void exibirleituras(){
 void setup() {
   Serial.begin(115200);
   inits();// put your setup code here, to run once:
-  
+  //LoRaNow.setRxWindow();
 }
 
 void loop() {
   obtenerBMEleituras();
   exibirleituras();
+  LoRaMessage = String(readingID)+" " + String(BME680temperatura)+"°C "+String(BME680umidade)+"% "+String(BME680pressao)+"hPA ";
+  LoRaNow.print(LoRaMessage);
+  LoRaNow.send();
+  LoRaNow.clear();
+  
   LoRaNow.onMessage(onMessage);//escuchar nodo vecino
-  //LoRaNow.gateway(); // Configurar el dispositivo como gateway
-  //forrawr reeenviar mensjae de vencino
-  //sleep
+  //LoRaNow.onMessage(onMessage);
+  //LoRaNow.onSleep(onSleep);
+  LoRaNow.showStatus(Serial);
   LoRaNow.loop();// 
 }
