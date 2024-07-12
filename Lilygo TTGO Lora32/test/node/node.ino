@@ -1,6 +1,6 @@
 /*
   LoRaNow Node OLED OK
-  This code sends message and listen expecting some valid message from the gateway ok
+  This code sends message and listen expecting some valid message from someone like node or gateway 
   
 */
 //OLED 
@@ -65,20 +65,37 @@ void loop() {
 
 void onMessage(uint8_t *buffer, size_t size)
 {
-  Serial.print("Receive Message: ");
+  unsigned long id = LoRaNow.id();
+  byte count = LoRaNow.count();
+  
+  Serial.print("NodeIdTx: ");
+  Serial.print(id, HEX);
+  Serial.print(" Count: ");
+  Serial.print(count);
+  Serial.print(" Message: ");
   Serial.write(buffer, size);
   Serial.println();
   Serial.println();
+
+  // Send data to 
+  LoRaNow.clear();
+  LoRaNow.print("LoRanode responds thanks node "+ String(id) +" "+ String(count));
+  LoRaNow.send();
+
+  display.setCursor(70, 0);
+  display.print("!");
+  display.print(LoRaNow.id(),HEX);
+  display.display();
 }
 
 void onSleep()
 {
-  Serial.println("Sleep");
-  delay(5000); // "kind of a sleep"
   obtenerBMEleituras();
   LoRaMessage = String(BME680temperatura)+"°C "+String(BME680umidade)+"% "+String(BME680pressao)+"hPA ";
   Serial.print("Send Message from ");
-  Serial.println(LoRaNow.id(),HEX);
+  Serial.print(LoRaNow.id(),HEX);
   LoRaNow.print(LoRaMessage);
   LoRaNow.send();
+  Serial.println("...");
+  delay(2000); // "Delay"
 }
