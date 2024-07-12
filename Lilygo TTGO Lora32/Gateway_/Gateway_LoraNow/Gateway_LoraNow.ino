@@ -72,7 +72,7 @@ void onMessage(uint8_t *buffer, size_t size)
   LoRaNow.print("LoRaGateway responds thanks node "+ String(id));
   LoRaNow.send();
 
-  display.setCursor(75, 0);
+  display.setCursor(70, 0);
   display.print("M:");
   display.print(LoRaNow.id(),HEX);
   display.display();
