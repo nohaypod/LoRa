@@ -42,11 +42,11 @@ void onMessage(uint8_t *buffer, size_t size)
   unsigned long id = LoRaNow.id();
   byte count = LoRaNow.count();
   
-  Serial.print("NodeIdTx: ");
+  Serial.print("ID");
   Serial.print(id, HEX);
   Serial.print(" Count: ");
   Serial.print(count);
-  Serial.print(" Message: ");
+  Serial.print(" Menssagem: ");
   Serial.write(buffer, size);
   Serial.println();
   Serial.println();

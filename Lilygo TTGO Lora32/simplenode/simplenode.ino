@@ -1,14 +1,18 @@
 /*
   LoRaNow Simple Node
 
-  This code sends message and listen expecting some valid message from the gateway
-
-  created 01 04 2019
-  by Luiz H. Cassettari
+  This code sends message and listen expecting some valid message from the gateway 
 */
+//OLED 
+#include <Adafruit_SSD1306.h>//biblioteca para controlar displays OLED
+#define SCREEN_HEIGHT 64//indica a altura do display em pixels
+#define SCREEN_WIDTH 128//indica o tamanho da largura do display em pixels
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);// inicialização e comunicação I2C do display instace
+
 
 
 #include <LoRaNow.h>
+unsigned long id;
 //Sensor BME680 needs
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME680.h>
@@ -20,7 +24,17 @@ float BME680temperatura,BME680pressao,BME680umidade;//declaração das variávei
 String LoRaMessage = "";
 void setup() {
   Serial.begin(115200);
-  Serial.println("LoRaNow Simple Node");
+  Serial.println("LoRaNow Simple Node with OLED");
+  //inicializar o display OLED
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    while (true);
+  }
+  display.clearDisplay();
+  display.setTextColor(WHITE);
+  display.setTextSize(1);
+  display.setCursor(0, 0);
+  display.print("ID:");
+
   if (!bme.begin()) {
     Serial.println("Could not find a valid BME680 sensor, check wiring!");
     //while (1);
@@ -41,6 +55,10 @@ void setup() {
     Serial.println("LoRa init failed. Check your connections.");
     while (true);
   }
+  display.setCursor(18, 0);
+  id = LoRaNow.id();
+  display.print(id,HEX);
+  display.display();
 
   LoRaNow.onMessage(onMessage);
   LoRaNow.onSleep(onSleep);
@@ -71,7 +89,8 @@ void onSleep()
   delay(5000); // "kind of a sleep"
   Serial.println("Send Message");
   obtenerBMEleituras();
-  LoRaMessage = String(BME680temperatura)+"°C "+String(BME680umidade)+"% "+String(BME680pressao)+"hPA ";
+  LoRaMessage =String(BME680temperatura)+"°C "+String(BME680umidade)+"% "+String(BME680pressao)+"hPA ";
   LoRaNow.print(LoRaMessage);
   LoRaNow.send();
+  Serial.print("send: "+LoRaMessage);
 }
