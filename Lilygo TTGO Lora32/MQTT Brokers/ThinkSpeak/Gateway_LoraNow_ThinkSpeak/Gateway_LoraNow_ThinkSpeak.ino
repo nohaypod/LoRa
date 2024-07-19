@@ -1,10 +1,9 @@
+
 /*
-  LoRaNow Simple Gateway
+  LoRaNow Gateway
 
   This code receives messages form the node and sends a message back.
 
-  created 01 04 2019
-  by Luiz H. Cassettari
 */
 //OLED 
 #include <Adafruit_SSD1306.h>//biblioteca para controlar displays OLED
@@ -13,6 +12,23 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);// inicialização e comunicação I2C do display instace
 
 #include <LoRaNow.h> //Luiz H. Cassettari Ricaun based in LoRa.h
+/****************************************
+*Definir librería, instancias y constantes
+*para la conexión a ThingSpeak
+****************************************/
+#include "ThingSpeak.h"
+unsigned long Channel_ID = 2600666; //Ingrese su numero de canal de ThingSpeak
+const char * WriteAPIKey = "E37DQ0B2DAUSZKMO"; //Ingrese su clave de API de escritura de canal
+
+/*Definir libreris, instancias y constantes
+*para la conexion WIFI
+****************************************/
+#include <WiFi.h>
+const char * ssid = "Estudio 1"; // Ingrese su nombre red wifi
+const char * pass = "test1234"; //Ingresa la contraseña de tu red
+WiFiClient client;
+
+void onMessage(uint8_t *buffer, size_t size);
 
 void setup() {
   Serial.begin(115200);
@@ -46,6 +62,15 @@ void setup() {
 
   LoRaNow.onMessage(onMessage);
   LoRaNow.gateway();
+
+  WiFi.begin(ssid, pass); //Se inicia la conexión al Wifi
+//Minetras se conecta imprimirá ...
+while(WiFi.status() != WL_CONNECTED){
+  delay(500);
+  Serial.print(".");
+//Ya que se estableció la conexión al Wifi se imprime conexión establecida
+Serial.println("Conexion establecida");
+ThingSpeak.begin(client); //Iniciar el servidor de ThingSpeak
 }
 
 void loop() {
@@ -71,9 +96,10 @@ void onMessage(uint8_t *buffer, size_t size)
   LoRaNow.clear();
   LoRaNow.print("LoRaGateway responds thanks "+ String(id,HEX) +" Packet "+ String(count)+" recived :)");
   LoRaNow.send();
+  ThingSpeak.setField(1, count);
 
   display.setCursor(70, 0);
   display.print("!");
   display.print(LoRaNow.id(),HEX);
   display.display();
-}
+};

@@ -77,7 +77,7 @@ void obtenerBMEleituras(){
 
 void onMessage(uint8_t *buffer, size_t size)
 {
-  Serial.print("Receive Message: ");
+  Serial.println("Receive Message: ");
   Serial.write(buffer, size);
   Serial.println();
   Serial.println();
