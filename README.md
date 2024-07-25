@@ -3,6 +3,8 @@ Carpetas
 
 Hardware. https://uelectronics.com/producto/lilygo-ttgo-lora32-915mhz-v1-6-1/
 
+API
+https://blog.uelectronics.com/tarjetas-desarrollo/esp32/dashboard-con-thingspeak-esp32-y-ds18b20-sumergible-iot/
 
 Simulacion. 
 https://wokwi.com/projects/398621063935120385 desenvolvikento \n
