@@ -24,3 +24,5 @@ Battery Inspiration
 
 Configuración interna LoRa
 ![image](https://github.com/nohaypod/LoRa/assets/20526176/930a03a2-ce2e-47f7-bd2e-ba93c8d3d419)
+
+yeah yeah savor a uva!
