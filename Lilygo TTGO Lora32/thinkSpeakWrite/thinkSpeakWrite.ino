@@ -1,3 +1,5 @@
+
+
 // Mesh has much greater memory requirements, and you may need to limit the
 // max message length to prevent wierd crashes
 #define RH_MESH_MAX_MESSAGE_LEN 50
@@ -17,6 +19,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);// inicializaç
 
 //Network
 #include <WiFi.h>
+#include <ThingSpeak.h>
 
 const char *ssid = "Estudio 1";     // Change this to your WiFi SSID
 const char *password = "test1234";  // Change this to your WiFi password
@@ -27,6 +30,7 @@ const int httpPort = 80;                        // This should not be changed
 const String channelID = "2602952";             // Change this to your channel ID
 const String writeApiKey = "WXALS2O5H456CDR7";  // Change this to your Write API key
 const String readApiKey = "SLUV598MJMSU6H5Q";   // Change this to your Read API key
+WiFiClient  client;
 int field1=0;
 int field2=0;
 int field3=0;
@@ -75,8 +79,10 @@ void setup()
   display.setTextColor(WHITE);
   display.setTextSize(1);
   display.setCursor(0, 0);
-  display.print("LoRa TIntermediate");
+  display.print("LoRa Intermediate");
   display.display();
+
+  ThingSpeak.begin(client);  // Initialize ThingSpeak
 
   Serial.begin(115200);
   Serial.print(F("initializing Server "));
@@ -134,34 +140,10 @@ void setup()
   Serial.println("RF95 ready");
 }
 
-void readResponse(NetworkClient *client) {
-  unsigned long timeout = millis();
-  while (client->available() == 0) {
-    if (millis() - timeout > 5000) {
-      Serial.println(">>> Client Timeout !");
-      client->stop();
-      return;
-    }
-  }
-
-
-  // Read all the lines of the reply from server and print them to Serial
-  while (client->available()) {
-    String line = client->readStringUntil('\r');
-    Serial.print(line);
-  }
-
-
-  Serial.printf("\nClosing connection\n\n");
-}
-
 uint8_t data[] = "Olá, de volta da ponte";
 // Dont put this on the stack:
 uint8_t buf[RH_MESH_MAX_MESSAGE_LEN];
 uint8_t res;
-uint8_t miau;
-
-
 
 void loop()
 {
@@ -173,20 +155,9 @@ void loop()
     Serial.print(from);
     Serial.print(": ");
     Serial.print((char*)buf);
-
     Serial.print(" rssi: ");
     Serial.println(rf95.lastRssi()); 
-
-    // Send a reply back to the originator client
-    res = manager.sendtoWait(data, sizeof(data), from);
-    if ( res != RH_ROUTER_ERROR_NONE)
-      {
-      Serial.print("sendtoWait failed:");
-      Serial.println(res);
-      }
-
-      //incio código thinkspeak
-        char str[sizeof(buf)];
+     char str[sizeof(buf)];
   memcpy(str, buf, sizeof(buf));
 
   // Variables para almacenar los valores
@@ -212,45 +183,22 @@ void loop()
   Serial.println(bateria);
   Serial.print("RSSI: ");
   Serial.println(rssi);
-      //
-      NetworkClient client;
-  String footer = String(" HTTP/1.1\r\n") + "Host: " + String(host) + "\r\n" + "Connection: close\r\n\r\n";
 
+   ThingSpeak.writeField( 2602952, 1, temp, "SLUV598MJMSU6H5Q" ); // Write the data to the channel
+    //delay(1000);
+  
+    // Send a reply back to the originator client
+    res = manager.sendtoWait(data, sizeof(data), from);
+    if ( res != RH_ROUTER_ERROR_NONE)
+      {
+      Serial.print("sendtoWait failed:");
+      Serial.println(res);
+      }
 
-  // WRITE --------------------------------------------------------------------------------------------
-  if (!client.connect(host, httpPort)) {
-    return;
-  }
-
-
-  //client.print("GET /update?api_key=" + writeApiKey + "&field1=" + field1 + footer);
-
-  client.print("GET /update?api_key=" + writeApiKey + "&field1=" + temp + "&field2=" + press+ "&field3=" + hum + footer);
-  readResponse(&client);
-
-
-  // READ --------------------------------------------------------------------------------------------
-
-
-  String readRequest = "GET /channels/" + channelID + "/fields/" + fieldNumber + ".json?results=" + numberOfResults + " HTTP/1.1\r\n" + "Host: " + host + "\r\n"
-                       + "Connection: close\r\n\r\n";
-
-
-  if (!client.connect(host, httpPort)) {
-    return;
-  }
-
-
-  client.print(readRequest);
-  readResponse(&client);
-
-
-  // -------------------------------------------------------------------------------------------------
-
-  field2++;
-  delay(1000);
-      
-
+    display.setCursor(0, 10);
+    display.print("LLegó un mensaje ALV");
+    display.display();
+    display.clearDisplay();
     }
   
     
